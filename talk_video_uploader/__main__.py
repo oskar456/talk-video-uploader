@@ -20,7 +20,7 @@ from .upload_video import get_authenticated_service, do_upload
     '--credentials',
     metavar='<oauth2_credentials_json_file>',
     show_default=True,
-    type=click.Path(exists=True, dir_okay=False),
+    type=click.Path(exists=False, dir_okay=False),
     default=os.path.join(
         click.get_app_dir("talk-video-uploader"),
         "youtube_credentials.json"
