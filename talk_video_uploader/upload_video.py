@@ -4,6 +4,7 @@ import httplib2
 import random
 import time
 import json
+import os
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -45,6 +46,10 @@ def save_credentials(creds, filename):
         'client_secret': creds.client_secret,
         'scopes': creds.scopes
     }
+    try:
+        os.makedirs(os.path.dirname(filename))
+    except FileExistsError:
+        pass
     with open(filename, 'w') as outfile:
         json.dump(creds_data, outfile)
 
