@@ -66,6 +66,7 @@ def main(client_secrets, credentials, files):
             tags.append("Lightning talk")
         else:
             meta['lt'] = ""
+            meta['lightning'] = False
         youtube_body = {
             "snippet": {
                 "title": "{lt}{speaker} – {title}".format_map(meta),
