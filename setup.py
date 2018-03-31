@@ -17,7 +17,7 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     packages=['talk_video_uploader'],
-    data_files=[('share/talk_video_uploader', ['client_id.json'])],
+    data_files=[('share/talk-video-uploader', ['client_id.json'])],
     install_requires=[
         'google-api-python-client',
         'google-auth-httplib2',
