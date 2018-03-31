@@ -13,7 +13,7 @@ from .upload_video import get_authenticated_service, do_upload
     metavar='<client_secrets_json_file>',
     show_default=True,
     type=click.Path(exists=True, dir_okay=False),
-    default=os.path.join(sys.prefix, 'share', 'talk_video_uploader',
+    default=os.path.join(sys.prefix, 'share', 'talk-video-uploader',
                          'client_id.json'),
     help='Path to OAuth2 client secret JSON file.')
 @click.option(
