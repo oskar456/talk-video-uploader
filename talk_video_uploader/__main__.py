@@ -1,10 +1,12 @@
 import sys
 import os
+import collections
 
 import yaml
 import click
 
 from .upload_video import get_authenticated_service, do_upload
+from .dumper import yaml_dump
 
 
 @click.command()
@@ -25,7 +27,8 @@ from .upload_video import get_authenticated_service, do_upload
         click.get_app_dir("talk-video-uploader"),
         "youtube_credentials.json"
     ),
-    help='Path to OAuth2 credentials JSON file. Will be generated if necessary.')
+    help='Path to OAuth2 credentials JSON file. '
+         'Will be generated if necessary.')
 @click.argument(
     'files',
     nargs=-1,
@@ -39,6 +42,7 @@ def main(client_secrets, credentials, files):
     Credentials file will be generated if non-existent.
     """
     youtube = get_authenticated_service(client_secrets, credentials)
+    pyvometa = collections.defaultdict(list)
     for f in files:
         fbase, fext = os.path.splitext(f)
         if fext.lower() not in ['.yaml', '.yml']:
@@ -83,14 +87,19 @@ def main(client_secrets, credentials, files):
         }
 
         video_url = do_upload(youtube, videofile, youtube_body)
-        talkmeta = [{"title": meta['title'],
-                     "speakers": meta['speaker'].split(", "),
-                     "lightning": meta['lightning'],
-                     "coverage": {"video": video_url},
-                     }]
-        talkyaml = yaml.safe_dump(talkmeta, default_flow_style=False,
-                                  allow_unicode=True)
+        talkmeta = collections.OrderedDict()
+        talkmeta["title"] = meta['title']
+        talkmeta["speakers"] = meta['speaker'].split(", ")
+        talkmeta["lightning"] = meta['lightning']
+        talkmeta["coverage"] = [{"video": video_url}, ]
+        talkyaml = yaml_dump([talkmeta, ])
         click.echo(talkyaml)
+        pyvometa[meta['url']].append(talkmeta)
+
+    for url, talkmeta in pyvometa.items():
+        click.echo(url)
+        click.echo("-"*len(url))
+        click.echo(yaml_dump({"talks": talkmeta}))
 
 
 if __name__ == '__main__':
