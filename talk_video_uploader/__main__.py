@@ -14,15 +14,16 @@ from .dumper import yaml_dump
     '--client-secrets',
     metavar='<client_secrets_json_file>',
     show_default=True,
-    type=click.Path(exists=True, dir_okay=False),
+    type=click.Path(dir_okay=False),
     default=os.path.join(sys.prefix, 'share', 'talk-video-uploader',
                          'client_id.json'),
-    help='Path to OAuth2 client secret JSON file.')
+    help='Path to OAuth2 client secret JSON file. '
+    'Only needed when generating new credentials.')
 @click.option(
     '--credentials',
     metavar='<oauth2_credentials_json_file>',
     show_default=True,
-    type=click.Path(exists=False, dir_okay=False),
+    type=click.Path(dir_okay=False),
     default=os.path.join(
         click.get_app_dir("talk-video-uploader"),
         "youtube_credentials.json"

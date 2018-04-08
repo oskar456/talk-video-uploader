@@ -5,6 +5,7 @@ import random
 import time
 import json
 import os
+import sys
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -61,6 +62,9 @@ def get_authenticated_service(client_secrets, creds_file, local_server=False):
     except (ValueError, FileNotFoundError):
         credentials = None
     if not credentials:
+        if not os.path.isfile(client_secrets):
+            sys.exit("Missing client secrets file {}, "
+                     "cannot proceed with authentication.".format(client_secrets))
         flow = InstalledAppFlow.from_client_secrets_file(client_secrets, SCOPES)
         credentials = flow.run_local_server() if local_server else flow.run_console()
         save_credentials(credentials, creds_file)
