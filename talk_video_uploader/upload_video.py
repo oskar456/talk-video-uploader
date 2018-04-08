@@ -89,46 +89,50 @@ def do_upload(youtube, videofile, body):
     request = youtube.videos().insert(
         part=",".join(list(body.keys())),
         body=body,
-        media_body=MediaFileUpload(videofile, chunksize=1024*1024,
+        media_body=MediaFileUpload(videofile, chunksize=10*1024*1024,
                                    resumable=True)
     )
 
     response = None
     error = None
     retry = 0
-    while response is None:
-        try:
-            click.echo("Uploading file {}...".format(videofile))
-            status, response = request.next_chunk()
-            if response is not None:
-                if "id" in response:
-                    click.echo("Video was successfully uploaded.")
-                    video_url = "https://www.youtube.com/watch?v={}".format(
-                                response["id"])
-                    return video_url
+    click.echo("Uploading file {}...".format(videofile))
+    with click.progressbar(length=request.resumable.size()) as progress:
+        while response is None:
+            try:
+                status, response = request.next_chunk()
+                if status:
+                    progress.update(status.resumable_progress)
+            except HttpError as e:
+                if e.resp.status in RETRIABLE_STATUS_CODES:
+                    error = "A retriable HTTP error {} occurred:\n{}".format(
+                            e.resp.status, e.content)
                 else:
-                    click.echo("The upload failed with an unexpected"
-                               " response: %s" % response,
-                               color="red")
+                    raise
+            except RETRIABLE_EXCEPTIONS as e:
+                error = "A retriable error occurred: {}".format(e)
+
+            if error is not None:
+                click.echo()
+                click.echo(error)
+                retry += 1
+                if retry > MAX_RETRIES:
+                    click.echo("No longer attempting to retry.", color="red")
                     return None
-        except HttpError as e:
-            if e.resp.status in RETRIABLE_STATUS_CODES:
-                error = "A retriable HTTP error {} occurred:\n{}".format(
-                        e.resp.status, e.content)
-            else:
-                raise
-        except RETRIABLE_EXCEPTIONS as e:
-            error = "A retriable error occurred: " + e
 
-        if error is not None:
-            click.echo(error)
-            retry += 1
-            if retry > MAX_RETRIES:
-                click.echo("No longer attempting to retry.", color="red")
-                return None
+                max_sleep = 2 ** retry
+                sleep_seconds = random.random() * max_sleep
+                click.echo("Sleeping {} seconds and then retrying…".format(
+                           sleep_seconds))
+                time.sleep(sleep_seconds)
+                error = None
 
-            max_sleep = 2 ** retry
-            sleep_seconds = random.random() * max_sleep
-            click.echo("Sleeping {} seconds and then retrying…".format(
-                       sleep_seconds))
-            time.sleep(sleep_seconds)
+    if "id" in response:
+        click.echo("Video was successfully uploaded.")
+        video_url = "https://www.youtube.com/watch?v={}".format(response["id"])
+        return video_url
+    else:
+        click.echo("The upload failed with an unexpected "
+                   "response: {}".format(response),
+                   color="red")
+        return None
