@@ -71,8 +71,10 @@ def get_authenticated_service(client_secrets, creds_file, local_server=False):
         credentials = None
     if not credentials:
         if not os.path.isfile(client_secrets):
-            sys.exit("Missing client secrets file {}, "
-                     "cannot proceed.".format(client_secrets))
+            click.echo(click.style("Missing client secrets file {}, "
+                                   "cannot proceed.".format(client_secrets),
+                                   fg="red"))
+            sys.exit(1)
         flow = InstalledAppFlow.from_client_secrets_file(client_secrets,
                                                          SCOPES)
         if local_server:
@@ -96,7 +98,9 @@ def do_upload(youtube, videofile, body):
     response = None
     error = None
     retry = 0
-    click.echo("Uploading file {}...".format(videofile))
+    click.echo("".join([click.style("Uploading file ", bold=True),
+                        os.path.basename(videofile),
+                        "…"]))
     with click.progressbar(length=request.resumable.size()) as progress:
         while response is None:
             try:
@@ -114,10 +118,11 @@ def do_upload(youtube, videofile, body):
 
             if error is not None:
                 click.echo()
-                click.echo(error)
+                click.echo(click.style(error, fg="red"))
                 retry += 1
                 if retry > MAX_RETRIES:
-                    click.echo("No longer attempting to retry.", color="red")
+                    click.echo(click.style("No longer attempting to retry.",
+                                           fg="red"))
                     return None
 
                 max_sleep = 2 ** retry
@@ -128,11 +133,12 @@ def do_upload(youtube, videofile, body):
                 error = None
 
     if "id" in response:
-        click.echo("Video was successfully uploaded.")
+        click.echo(click.style("Video was successfully uploaded.", fg="green",
+                               bold=True))
         video_url = "https://www.youtube.com/watch?v={}".format(response["id"])
         return video_url
     else:
-        click.echo("The upload failed with an unexpected "
-                   "response: {}".format(response),
-                   color="red")
+        click.echo(click.style("The upload failed with an unexpected "
+                               "response: {}".format(response),
+                               fg="red"))
         return None

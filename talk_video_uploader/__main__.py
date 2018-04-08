@@ -47,14 +47,15 @@ def main(client_secrets, credentials, files):
     for f in files:
         fbase, fext = os.path.splitext(f)
         if fext.lower() not in [".yaml", ".yml"]:
-            click.echo("Ignoring file {} with unknown "
-                       "extension.".format(f), fg="red")
+            click.echo(click.style("Ignoring file {} with unknown "
+                       "extension.".format(f), fg="red"))
             continue
         try:
             with open(f) as inf:
                 meta = yaml.safe_load(inf)
         except FileNotFoundError:
-            click.echo("Metadata file {} not found!".format(f), fg="red")
+            click.echo(click.style("Metadata file {} not found!".format(f),
+                                   fg="red"))
             continue
         videofile = meta.get("fname")
         if videofile:
@@ -62,7 +63,8 @@ def main(client_secrets, credentials, files):
         else:
             videofile = fbase + ".mkv"
         if not os.path.exists(videofile):
-            click.echo("Video file {} not found!".format(videofile), fg="red")
+            click.echo(click.style("Video file {} "
+                                   "not found!".format(videofile), fg="red"))
             continue
 
         tags = ["Python", "Pyvo"]
@@ -71,7 +73,7 @@ def main(client_secrets, credentials, files):
             tags.append("Lightning talk")
         else:
             meta["lt"] = ""
-            meta["lightning"] = False
+
         youtube_body = {
             "snippet": {
                 "title": "{lt}{speaker} – {title}".format_map(meta),
@@ -88,17 +90,18 @@ def main(client_secrets, credentials, files):
         }
 
         video_url = do_upload(youtube, videofile, youtube_body)
-        talkmeta = collections.OrderedDict()
-        talkmeta["title"] = meta["title"]
-        talkmeta["speakers"] = meta["speaker"].split(", ")
-        talkmeta["lightning"] = meta["lightning"]
-        talkmeta["coverage"] = [{"video": video_url}, ]
-        talkyaml = yaml_dump([talkmeta, ])
-        click.echo(talkyaml)
-        pyvometa[meta["url"]].append(talkmeta)
+        if video_url:
+            talkmeta = collections.OrderedDict()
+            talkmeta["title"] = meta["title"]
+            talkmeta["speakers"] = meta["speaker"].split(", ")
+            talkmeta["lightning"] = meta.get("lightning", False)
+            talkmeta["coverage"] = [{"video": video_url}, ]
+            talkyaml = yaml_dump([talkmeta, ])
+            click.echo(talkyaml)
+            pyvometa[meta["url"]].append(talkmeta)
 
     for url, talkmeta in pyvometa.items():
-        click.echo(url)
+        click.echo(click.style(url, bold=True))
         click.echo("-"*len(url))
         click.echo(yaml_dump({"talks": talkmeta}))
 
