@@ -11,30 +11,30 @@ from .dumper import yaml_dump
 
 @click.command()
 @click.option(
-    '--client-secrets',
-    metavar='<client_secrets_json_file>',
+    "--client-secrets",
+    metavar="<client_secrets_json_file>",
     show_default=True,
     type=click.Path(dir_okay=False),
-    default=os.path.join(sys.prefix, 'share', 'talk-video-uploader',
-                         'client_id.json'),
-    help='Path to OAuth2 client secret JSON file. '
-    'Only needed when generating new credentials.')
+    default=os.path.join(sys.prefix, "share", "talk-video-uploader",
+                         "client_id.json"),
+    help="Path to OAuth2 client secret JSON file. "
+    "Only needed when generating new credentials.")
 @click.option(
-    '--credentials',
-    metavar='<oauth2_credentials_json_file>',
+    "--credentials",
+    metavar="<oauth2_credentials_json_file>",
     show_default=True,
     type=click.Path(dir_okay=False),
     default=os.path.join(
         click.get_app_dir("talk-video-uploader"),
         "youtube_credentials.json"
     ),
-    help='Path to OAuth2 credentials JSON file. '
-         'Will be generated if necessary.')
+    help="Path to OAuth2 credentials JSON file. "
+         "Will be generated if necessary.")
 @click.argument(
-    'files',
+    "files",
     nargs=-1,
     type=click.Path(exists=True, dir_okay=False),
-    metavar='<metadata_yaml_file>…')
+    metavar="<metadata_yaml_file>…")
 def main(client_secrets, credentials, files):
     """
     Upload Pyvo videos with proper metadata.
@@ -46,15 +46,15 @@ def main(client_secrets, credentials, files):
     pyvometa = collections.defaultdict(list)
     for f in files:
         fbase, fext = os.path.splitext(f)
-        if fext.lower() not in ['.yaml', '.yml']:
+        if fext.lower() not in [".yaml", ".yml"]:
             click.echo("Ignoring file {} with unknown "
-                       "extension.".format(f), fg='red')
+                       "extension.".format(f), fg="red")
             continue
         try:
             with open(f) as inf:
                 meta = yaml.safe_load(inf)
         except FileNotFoundError:
-            click.echo("Metadata file {} not found!".format(f), fg='red')
+            click.echo("Metadata file {} not found!".format(f), fg="red")
             continue
         videofile = meta.get("fname")
         if videofile:
@@ -62,16 +62,16 @@ def main(client_secrets, credentials, files):
         else:
             videofile = fbase + ".mkv"
         if not os.path.exists(videofile):
-            click.echo("Video file {} not found!".format(videofile), fg='red')
+            click.echo("Video file {} not found!".format(videofile), fg="red")
             continue
 
         tags = ["Python", "Pyvo"]
         if meta.get("lightning"):
-            meta['lt'] = "\N{HIGH VOLTAGE SIGN} "
+            meta["lt"] = "\N{HIGH VOLTAGE SIGN} "
             tags.append("Lightning talk")
         else:
-            meta['lt'] = ""
-            meta['lightning'] = False
+            meta["lt"] = ""
+            meta["lightning"] = False
         youtube_body = {
             "snippet": {
                 "title": "{lt}{speaker} – {title}".format_map(meta),
@@ -89,13 +89,13 @@ def main(client_secrets, credentials, files):
 
         video_url = do_upload(youtube, videofile, youtube_body)
         talkmeta = collections.OrderedDict()
-        talkmeta["title"] = meta['title']
-        talkmeta["speakers"] = meta['speaker'].split(", ")
-        talkmeta["lightning"] = meta['lightning']
+        talkmeta["title"] = meta["title"]
+        talkmeta["speakers"] = meta["speaker"].split(", ")
+        talkmeta["lightning"] = meta["lightning"]
         talkmeta["coverage"] = [{"video": video_url}, ]
         talkyaml = yaml_dump([talkmeta, ])
         click.echo(talkyaml)
-        pyvometa[meta['url']].append(talkmeta)
+        pyvometa[meta["url"]].append(talkmeta)
 
     for url, talkmeta in pyvometa.items():
         click.echo(url)
@@ -103,6 +103,6 @@ def main(client_secrets, credentials, files):
         click.echo(yaml_dump({"talks": talkmeta}))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # pylint doesn't realize that click has changed the function signature.
     main()  # pylint: disable=no-value-for-parameter

@@ -15,8 +15,8 @@ def _dict_representer(dumper, data):
 
 class EventDumper(yaml.SafeDumper):
     def __init__(self, *args, **kwargs):
-        kwargs['default_flow_style'] = False
-        kwargs['allow_unicode'] = True
+        kwargs["default_flow_style"] = False
+        kwargs["allow_unicode"] = True
         super(EventDumper, self).__init__(*args, **kwargs)
 
 
