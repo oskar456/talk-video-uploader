@@ -89,12 +89,20 @@ def main(client_secrets, credentials, files):
                 },
         }
 
+        lang = meta.get("language")
+        if lang:
+            if "audio" in lang:
+                youtube_body["snippet"]["defaultAudioLanguage"] = lang["audio"]
+
         video_url = do_upload(youtube, videofile, youtube_body)
         if video_url:
             talkmeta = collections.OrderedDict()
             talkmeta["title"] = meta["title"]
             talkmeta["speakers"] = meta["speaker"].split(", ")
-            talkmeta["lightning"] = meta.get("lightning", False)
+            if meta.get("lightning"):
+                talkmeta["lightning"] = True
+            if lang:
+                talkmeta["language"] = lang
             talkmeta["coverage"] = [{"video": video_url}, ]
             talkyaml = yaml_dump([talkmeta, ])
             click.echo(talkyaml)
