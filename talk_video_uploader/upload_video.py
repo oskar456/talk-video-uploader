@@ -107,6 +107,8 @@ def do_upload(youtube, videofile, body):
                 status, response = request.next_chunk()
                 if status:
                     progress.update(status.resumable_progress)
+                elif response:
+                    progress.update(request.resumable.size())
             except HttpError as e:
                 if e.resp.status in RETRIABLE_STATUS_CODES:
                     error = "A retriable HTTP error {} occurred:\n{}".format(
@@ -116,7 +118,7 @@ def do_upload(youtube, videofile, body):
             except RETRIABLE_EXCEPTIONS as e:
                 error = "A retriable error occurred: {}".format(e)
 
-            if error is not None:
+            if error:
                 click.echo()
                 click.echo(click.style(error, fg="red"))
                 retry += 1
