@@ -67,7 +67,9 @@ def main(client_secrets, credentials, files):
                                    "not found!".format(videofile), fg="red"))
             continue
 
-        tags = ["Python", "Pyvo"]
+        tags = meta.get("tags")
+        if not tags:
+            tags = ["Python", "Pyvo"]
         if meta.get("lightning"):
             meta["lt"] = "\N{HIGH VOLTAGE SIGN} "
             tags.append("Lightning talk")
